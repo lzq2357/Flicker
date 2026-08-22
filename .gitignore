@@ -32,3 +32,7 @@ Carthage/
 
 # Docs (promotional articles, not part of source)
 docs/
+/.omo/
+/Flicker.xcodeproj/project.xcworkspace/xcuserdata/
+/.idea/
+/Flicker.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist

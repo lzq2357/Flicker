@@ -13,7 +13,6 @@ struct FlickerApp: App {
     @StateObject private var store = AppEntryStore()
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @Environment(\.openWindow) private var openWindow
-    @Environment(\.openSettings) private var openSettingsEnv
 
     var body: some Scene {
         Window("Flicker", id: Self.mainWindowID) {
@@ -25,8 +24,10 @@ struct FlickerApp: App {
                     AppActions.shared.openMainWindow = { [self] in
                         openWindow(id: Self.mainWindowID)
                     }
-                    AppActions.shared.openSettings = { [self] in
-                        openSettingsEnv()
+                    AppActions.shared.openSettings = {
+                        // openSettings 环境变量是 macOS 14+ API，13 上没有；
+                        // showSettingsWindow: 选择器在 13/14 都能打开 SwiftUI Settings 场景。
+                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
                     }
                 }
                 .onOpenURL { url in

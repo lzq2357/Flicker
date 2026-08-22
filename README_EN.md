@@ -7,8 +7,8 @@
 </p>
 
 <p align="center">
-  <a href="https://www.apple.com/macos/"><img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS 14+" /></a>
-  <a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-6.0-orange" alt="Swift 6.0" /></a>
+  <a href="https://www.apple.com/macos/"><img src="https://img.shields.io/badge/macOS-13%2B-blue" alt="macOS 13+" /></a>
+  <a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-5-orange" alt="Swift 5" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT" /></a>
 </p>
 
@@ -53,8 +53,8 @@ FlickerExtension/   # Finder Sync extension (FIFinderSync subclass)
 
 ### Requirements
 
-- macOS 14.0 (Sonoma) or later
-- Xcode 16+ (for building)
+- macOS 13.0 (Ventura) or later
+- Xcode 15.2+ (for building; the latest version installable on macOS 13 — use Xcode 16+ on macOS 14)
 
 ### Build & Run
 
@@ -86,17 +86,17 @@ If you fork this project and plan to build your own copy, update these values to
 |---------|---------------|----------|
 | Bundle Identifier (App) | `com.wangyanan.flicker` | `project.pbxproj` |
 | Bundle Identifier (Extension) | `com.wangyanan.flicker.extension` | `project.pbxproj` |
-| App Group | `group.com.wangyanan.flicker` | `Shared/SharedStore.swift` |
+| App Group | `group.com.wangyanan.flicker` | `Shared/SharedStore.swift` + both `.entitlements` |
 | URL Scheme | `flicker` | `Resources/Info.plist` |
 
-> **Tip:** App Group must be registered in the Apple Developer portal. For local development, ad-hoc signing (`CODE_SIGN_IDENTITY = "-"`) works without a developer account.
+> **Tip:** On macOS 13/14 the App Group container needs no registration on the Developer portal — ad-hoc signing (`CODE_SIGN_IDENTITY = "-"`) works for local development. On macOS 15+ app group containers are protected and require a Team-ID-prefixed group ID or a provisioning profile.
 
 ## Technical Notes
 
 - Relative paths are based on the current Finder window folder (`targetedURL`); falls back to absolute path when unavailable
-- Configuration is shared between the app and extension via JSON files in the user's Application Support directory
+- Configuration is shared between the app and extension via JSON files in the App Group container (`~/Library/Group Containers/group.com.wangyanan.flicker/`)
 - Finder Sync extensions are hosted by macOS; quitting Flicker does not unload the extension. To temporarily hide Flicker's menu output, disable **Enable Finder Context Menu** in Action Control
-- Minimum deployment target: macOS 14.0 (Sonoma)
+- Minimum deployment target: macOS 13.0 (Ventura)
 
 ## Contributing
 

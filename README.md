@@ -7,8 +7,8 @@
 </p>
 
 <p align="center">
-  <a href="https://www.apple.com/macos/"><img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS 14+" /></a>
-  <a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-6.0-orange" alt="Swift 6.0" /></a>
+  <a href="https://www.apple.com/macos/"><img src="https://img.shields.io/badge/macOS-13%2B-blue" alt="macOS 13+" /></a>
+  <a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-5-orange" alt="Swift 5" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT" /></a>
 </p>
 
@@ -53,8 +53,8 @@ FlickerExtension/   # Finder Sync 扩展（FIFinderSync 子类）
 
 ### 系统要求
 
-- macOS 14.0（Sonoma）或更高版本
-- Xcode 16+（构建）
+- macOS 13.0（Ventura）或更高版本
+- Xcode 15.2+（构建；macOS 13 上可安装的最新版本，macOS 14 上可用 Xcode 16+）
 
 ### 构建与运行
 
@@ -86,17 +86,17 @@ xcodebuild -project Flicker.xcodeproj -scheme Flicker -configuration Debug build
 |--------|--------|----------|
 | Bundle Identifier（App） | `com.wangyanan.flicker` | `project.pbxproj` |
 | Bundle Identifier（Extension） | `com.wangyanan.flicker.extension` | `project.pbxproj` |
-| App Group | `group.com.wangyanan.flicker` | `Shared/SharedStore.swift` |
+| App Group | `group.com.wangyanan.flicker` | `Shared/SharedStore.swift` + 两个 `.entitlements` |
 | URL Scheme | `flicker` | `Resources/Info.plist` |
 
-> **提示：** App Group 需要在 Apple Developer 后台注册后才能使用。本地开发可使用 ad-hoc 签名（`CODE_SIGN_IDENTITY = "-"`），无需开发者账号。
+> **提示：** macOS 13/14 上 App Group 容器无需在开发者后台注册，本地开发可用 ad-hoc 签名（`CODE_SIGN_IDENTITY = "-"`）直接使用；macOS 15+ 的 App Group 容器受保护，需要 Team ID 前缀的组名或描述文件授权。
 
 ## 技术说明
 
 - 相对路径基准为当前 Finder 窗口文件夹（`targetedURL`），无法获取时回退为绝对路径
-- 配置通过用户 Application Support 目录中的 JSON 文件在 App 与扩展间共享
+- 配置通过 App Group 容器（`~/Library/Group Containers/group.com.wangyanan.flicker/`）中的 JSON 文件在 App 与扩展间共享
 - Finder Sync 扩展由 macOS 托管，退出 Flicker 主 App 不等于卸载扩展；如需临时关闭 Flicker 菜单，可在「操作控制」中关闭「启用 Finder 右键菜单」
-- 最低系统版本 macOS 14.0（Sonoma）
+- 最低系统版本 macOS 13.0（Ventura）
 
 ## 贡献
 

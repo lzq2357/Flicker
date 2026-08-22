@@ -11,7 +11,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 是否因处理自定义 URL 而被拉起（扩展触发"打开方式"）。
     /// 仅在主线程读写。
-    nonisolated(unsafe) static var launchedByURL = false
+    static var launchedByURL = false
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         // 通过 URL 启动时，系统会带上 kAEGetURL Apple Event，direct object 即 URL 字符串。

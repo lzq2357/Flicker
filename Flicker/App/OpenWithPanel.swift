@@ -13,7 +13,6 @@ struct OpenWithPanel: View {
     @State private var showingAddSheet = false
     @State private var editing: AppEntry?
     @State private var pendingDelete: AppEntry?
-    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         VStack(spacing: 0) {
@@ -60,10 +59,14 @@ struct OpenWithPanel: View {
     private var listSection: some View {
         Group {
             if store.entries.isEmpty {
-                ContentUnavailableView {
-                    Label("暂无配置", systemImage: "square.dashed")
-                } description: {
+                VStack(spacing: 8) {
+                    Image(systemName: "square.dashed")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.secondary)
+                    Text("暂无配置").font(.headline)
                     Text("点击下方 + 添加要用右键打开文件的应用")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {

@@ -32,6 +32,9 @@ final class FinderSync: FIFinderSync {
         if menuKind == .contextualMenuForContainer {
             // 获取当前目录
             if let targetURL = FIFinderSyncController.default().targetedURL() {
+                if menuSettings.showCopyAbsolutePath {
+                    menu.addItem(withTitle: "复制当前路径", action: #selector(copyCurrentPath(_:)), keyEquivalent: "")
+                }
                 addNewFileMenu(to: menu, directory: targetURL.path)
             }
             return menu
@@ -183,6 +186,12 @@ final class FinderSync: FIFinderSync {
         guard let urls = FIFinderSyncController.default().selectedItemURLs(), !urls.isEmpty else { return }
         let names = urls.map(\.lastPathComponent).joined(separator: "\n")
         copyToPasteboard(names)
+    }
+
+    /// 复制空白处右键时所在目录的路径。
+    @objc private func copyCurrentPath(_ sender: NSMenuItem) {
+        guard let url = FIFinderSyncController.default().targetedURL() else { return }
+        copyToPasteboard(url.path)
     }
     
     @objc private func createNewFile(_ sender: NSMenuItem) {

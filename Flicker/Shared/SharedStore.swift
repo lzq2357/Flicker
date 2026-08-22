@@ -9,40 +9,33 @@
 import Foundation
 import os
 
-/// 配置读写。App 与扩展共享一个固定路径文件。
-/// 路径：~/Library/Application Support/Flicker/app_entries.json
+/// 配置读写。App 与扩展通过 App Group 容器共享同一组 JSON 文件。
+/// 路径：~/Library/Group Containers/group.com.wangyanan.flicker/Flicker/
 ///
-/// 关键点：沙盒扩展里 `urls(for: .applicationSupportDirectory)` 与
-/// `homeDirectoryForCurrentUser` 都返回沙盒容器路径而非真实主目录。
-/// 因此用 `getpwuid(getuid())` 取真实主目录，保证 App 与扩展读写同一文件。
+/// App 未开沙盒、扩展开了沙盒（含 com.apple.security.application-groups
+/// entitlement），两侧都用 containerURL(forSecurityApplicationGroupIdentifier:)
+/// 解析同一个容器路径，避免依赖任何硬编码的用户路径。
 enum SharedStore {
+    /// 与两个 target 的 entitlements 中 com.apple.security.application-groups 保持一致。
+    static let appGroupIdentifier = "group.com.wangyanan.flicker"
     static let configFileName = "app_entries.json"
     static let menuSettingsFileName = "menu_settings.json"
     static let newFileSettingsFileName = "new_file_settings.json"
     static let appSupportSubdir = "Flicker"
     private static let logger = Logger(subsystem: "com.wangyanan.flicker", category: "SharedStore")
 
-    /// 真实用户主目录（不受沙盒容器重定向影响）。
-    private static var realHomeDirectory: URL? {
-        guard let pw = getpwuid(getuid()) else { return nil }
-        return URL(fileURLWithFileSystemRepresentation: pw.pointee.pw_dir, isDirectory: true, relativeTo: nil)
-    }
-
-    /// 共享目录 URL（真实路径，非沙盒容器路径）。
+    /// 共享目录 URL（App Group 容器内）。
     static var sharedDirectoryURL: URL? {
-        guard let home = realHomeDirectory else { return nil }
+        guard let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else { return nil }
         let fm = FileManager.default
-        let dir = home
-            .appendingPathComponent("Library", isDirectory: true)
-            .appendingPathComponent("Application Support", isDirectory: true)
-            .appendingPathComponent(appSupportSubdir, isDirectory: true)
+        let dir = container.appendingPathComponent(appSupportSubdir, isDirectory: true)
         if !fm.fileExists(atPath: dir.path) {
             try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
         }
         return dir
     }
 
-    /// 共享配置文件 URL（真实路径，非沙盒容器路径）。
+    /// 共享配置文件 URL（App Group 容器内）。
     static var configFileURL: URL? {
         sharedDirectoryURL?.appendingPathComponent(configFileName, isDirectory: false)
     }
@@ -57,8 +50,34 @@ enum SharedStore {
         sharedDirectoryURL?.appendingPathComponent(newFileSettingsFileName, isDirectory: false)
     }
 
+    // MARK: - 旧配置迁移
+
+    /// 旧版本配置位于 ~/Library/Application Support/Flicker（依赖沙盒临时例外
+    /// entitlement 且路径硬编码了作者主目录，其他用户读不到）。新版本改用
+    /// App Group 容器，首次读取时若目标文件缺失则从旧位置拷贝一次。
+    private static var legacyMigrationDone = false
+    private static func migrateLegacyFilesIfNeeded() {
+        guard !legacyMigrationDone else { return }
+        legacyMigrationDone = true
+        let fm = FileManager.default
+        let legacyDir = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+            .appendingPathComponent("Library", isDirectory: true)
+            .appendingPathComponent("Application Support", isDirectory: true)
+            .appendingPathComponent(appSupportSubdir, isDirectory: true)
+        guard fm.fileExists(atPath: legacyDir.path),
+              let sharedDir = sharedDirectoryURL else { return }
+        for name in [configFileName, menuSettingsFileName, newFileSettingsFileName] {
+            let src = legacyDir.appendingPathComponent(name, isDirectory: false)
+            let dst = sharedDir.appendingPathComponent(name, isDirectory: false)
+            if fm.fileExists(atPath: src.path), !fm.fileExists(atPath: dst.path) {
+                try? fm.copyItem(at: src, to: dst)
+            }
+        }
+    }
+
     /// 读取应用列表。
     static func loadEntries() -> [AppEntry] {
+        migrateLegacyFilesIfNeeded()
         guard let url = configFileURL,
               let data = try? Data(contentsOf: url) else { return [] }
         do {
@@ -87,6 +106,7 @@ enum SharedStore {
 
     /// 读取菜单设置。文件不存在时返回默认值。
     static func loadMenuSettings() -> MenuSettings {
+        migrateLegacyFilesIfNeeded()
         guard let url = menuSettingsFileURL,
               let data = try? Data(contentsOf: url) else { return .defaults }
         do {
@@ -115,6 +135,7 @@ enum SharedStore {
     
     /// 读取新建文件设置。文件不存在时返回默认值。
     static func loadNewFileSettings() -> NewFileSettings {
+        migrateLegacyFilesIfNeeded()
         guard let url = newFileSettingsFileURL,
               let data = try? Data(contentsOf: url) else { return .defaults }
         do {
